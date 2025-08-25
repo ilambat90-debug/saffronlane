@@ -130,7 +130,7 @@ export default function Home() {
             </h1>
             <p className="mt-3 sm:mt-4 text-base sm:text-lg text-slate-700 leading-relaxed">
               Many of us visit Saffron Hill Cemetery and, with the passing of time, can’t remember the exact place
-              where our loved ones are buried. This project was built for the community to solve that problem:
+              where our friends or family are buried. This project was built for the community to solve that problem:
               search a name, see the location, and get directions straight to the graveside.
             </p>
 
