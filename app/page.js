@@ -1,35 +1,19 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
-/**
- * Public landing + search
- * - Searches ONLY given_names (first name) and family_name (surname)
- * - Optional year filter
- * - Mobile responsive UI
- */
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
-
   const [form, setForm] = useState({
     given_names: "",
     family_name: "",
-    dob: "",
-    dod: "",
     year: "",
   });
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-
-  // Optional connection test (shows in console)
-  useEffect(() => {
-    (async () => {
-      const { error } = await supabase.from("burials").select("id").limit(1);
-      if (error) console.error("Supabase error:", error.message);
-    })();
-  }, []);
 
   function onChange(e) {
     const { name, value } = e.target;
@@ -43,58 +27,28 @@ export default function Home() {
     setLoading(true);
 
     try {
-      // Base select: we’ll construct display name from first+surname
+      // Search by first/last name (ilike = case-insensitive, partial)
       let query = supabase.from("burials").select(`
-        id,
-        given_names,
-        family_name,
-        year_of_death,
-        section_code,
-        row,
-        plot,
-        grave_reference,
-        notes
+        id, full_name, year_of_death, section_code, row, plot, grave_reference, notes
       `);
 
-      // FIRST NAME — partial, case-insensitive
       if (form.given_names.trim()) {
         query = query.ilike("given_names", `%${form.given_names.trim()}%`);
       }
-
-      // SURNAME — partial, case-insensitive
       if (form.family_name.trim()) {
         query = query.ilike("family_name", `%${form.family_name.trim()}%`);
       }
-
-      // YEAR (optional exact)
       if (form.year.trim()) {
-        const yearNum = Number(form.year.trim());
-        if (!Number.isNaN(yearNum)) {
-          query = query.eq("year_of_death", yearNum);
-        }
+        query = query.eq("year_of_death", form.year.trim());
       }
 
-      // TODO: add DoB/DoD filtering later if you decide the column types
+      const { data, error: qErr } = await query.limit(30);
+      if (qErr) throw qErr;
 
-      const { data, error } = await query.order("family_name", { ascending: true }).limit(50);
-      if (error) throw error;
-
-      setResults(
-        (data || []).map((r) => ({
-          id: r.id,
-          // display name only for rendering; NOT used for search logic
-          display_name: `${r.given_names ?? ""} ${r.family_name ?? ""}`.trim(),
-          year_of_death: r.year_of_death,
-          section_code: r.section_code,
-          row: r.row,
-          plot: r.plot,
-          grave_reference: r.grave_reference,
-          notes: r.notes,
-        }))
-      );
+      setResults(data || []);
     } catch (err) {
       console.error(err);
-      setError("Search failed. Please try again.");
+      setError("Sorry, we couldn’t run that search. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -108,16 +62,13 @@ export default function Home() {
       >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-base sm:text-lg font-semibold tracking-tight">
-              {r.display_name || "Name unavailable"}
-            </h3>
+            <h3 className="text-base sm:text-lg font-semibold tracking-tight">{r.full_name}</h3>
             <p className="text-sm text-gray-600">
               {r.year_of_death ? `Year of death: ${r.year_of_death}` : "Year unknown"}
             </p>
             <p className="text-sm text-gray-700">
               Section <span className="font-medium">{r.section_code ?? "?"}</span>
-              {r.row ? ` · Row ${r.row}` : ""}
-              {r.plot ? ` · Plot ${r.plot}` : ""}
+              {r.row ? ` · Row ${r.row}` : ""}{r.plot ? ` · Plot ${r.plot}` : ""}
               {r.grave_reference ? ` · Ref ${r.grave_reference}` : ""}
             </p>
             {r.notes ? <p className="text-sm text-gray-500 mt-1 line-clamp-2">{r.notes}</p> : null}
@@ -143,7 +94,7 @@ export default function Home() {
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
             <a className="hover:text-gray-900" href="#search">Search</a>
-            <a className="hover:text-gray-900" href="#how">How it works</a>
+            <a className="hover:text-gray-900" href="#about">About</a>
             <a className="hover:text-gray-900" href="#privacy">Privacy</a>
           </nav>
 
@@ -159,12 +110,11 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Mobile dropdown */}
         {menuOpen && (
           <div className="md:hidden border-t border-gray-100 bg-white">
             <nav className="mx-auto max-w-6xl px-4 py-3 flex flex-col gap-2 text-sm">
               <a className="py-2 hover:text-gray-900" href="#search" onClick={() => setMenuOpen(false)}>Search</a>
-              <a className="py-2 hover:text-gray-900" href="#how" onClick={() => setMenuOpen(false)}>How it works</a>
+              <a className="py-2 hover:text-gray-900" href="#about" onClick={() => setMenuOpen(false)}>About</a>
               <a className="py-2 hover:text-gray-900" href="#privacy" onClick={() => setMenuOpen(false)}>Privacy</a>
             </nav>
           </div>
@@ -176,11 +126,12 @@ export default function Home() {
         <div className="grid gap-8 md:grid-cols-2 md:gap-10 items-start">
           <div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
-              Find your loved ones at <span className="text-blue-600">Saffron Hill Cemetery</span>
+              Never lose your way when paying respects
             </h1>
             <p className="mt-3 sm:mt-4 text-base sm:text-lg text-slate-700 leading-relaxed">
-              Search by name and date to locate graves with clear section, row, and plot details.
-              Built by locals, for locals.
+              Many of us visit Saffron Hill Cemetery and, with the passing of time, can’t remember the exact place
+              where our loved ones are buried. This project was built by the community to solve that problem:
+              search a name, see the location, and get directions straight to the graveside.
             </p>
             <ul className="mt-5 sm:mt-6 text-slate-700 grid gap-2">
               <li className="flex items-center gap-2">
@@ -189,13 +140,18 @@ export default function Home() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
-                Optional photos of the headstone or section sign
+                Clear section, row and plot details; directions available
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
-                Turn-by-turn walking guidance coming soon
+                Optional headstone/section photos to help you find the spot
               </li>
             </ul>
+
+            <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+              This is a community effort offered sincerely for everyone’s benefit.  
+              All the creator asks in return is your <span className="font-semibold">duas/prayers</span> and that it serves its purpose.
+            </div>
           </div>
 
           {/* Search card */}
@@ -227,7 +183,6 @@ export default function Home() {
                     autoComplete="off"
                   />
                 </div>
-
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Year (if exact date unknown)</label>
                   <input
@@ -240,7 +195,6 @@ export default function Home() {
                     placeholder="e.g., 2004"
                   />
                 </div>
-
                 <div className="sm:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1">
                   <p className="text-xs text-gray-500">Tip: Partial names work. We’ll show the closest matches.</p>
                   <button
@@ -262,15 +216,14 @@ export default function Home() {
                       {loading ? "Please wait…" : `${results.length} found`}
                     </span>
                   </div>
-
                   <div className="grid gap-3">
                     {error && <p className="text-red-600 text-sm">{error}</p>}
                     {!loading && results.length === 0 && (
-                      <p className="text-sm text-gray-500">No matches yet. Try a different spelling or add a year.</p>
+                      <p className="text-sm text-gray-500">
+                        No matches yet. Try a different spelling or add a year.
+                      </p>
                     )}
-                    {results.map((r) => (
-                      <ResultCard key={r.id} r={r} />
-                    ))}
+                    {results.map((r) => <ResultCard key={r.id} r={r} />)}
                   </div>
                 </div>
               )}
@@ -279,31 +232,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how" className="mx-auto max-w-6xl px-4 py-8 md:py-12">
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
-          {[
-            {
-              title: "Community-built",
-              body:
-                "Volunteers carefully record names, section, row, plot, and—where possible—a precise GPS point near the headstone.",
-            },
-            {
-              title: "Simple to use",
-              body:
-                "Search by name and dates. We’ll show the section and the best route from the entrance. Photos are added when available.",
-            },
-            {
-              title: "Always improving",
-              body:
-                "If something looks wrong, report it and we’ll fix it. We plan to add turn-by-turn walking guidance next.",
-            },
-          ].map((f) => (
-            <div key={f.title} className="rounded-3xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm">
-              <h3 className="font-semibold">{f.title}</h3>
-              <p className="mt-2 text-sm text-gray-700">{f.body}</p>
-            </div>
-          ))}
+      {/* About */}
+      <section id="about" className="mx-auto max-w-6xl px-4 py-8 md:py-12">
+        <div className="rounded-3xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm">
+          <h3 className="font-semibold text-lg">Built with care for the community</h3>
+          <p className="mt-2 text-sm text-gray-700">
+            Volunteers are recording names, section, row, plot and—where possible—a precise GPS point at the graveside.
+            If you spot any mistakes, or would prefer a record to be hidden, please contact us and we’ll put it right.
+          </p>
         </div>
       </section>
 
@@ -312,8 +248,8 @@ export default function Home() {
         <div className="rounded-3xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm">
           <h3 className="font-semibold">Privacy & Respect</h3>
           <p className="mt-2 text-sm text-gray-700">
-            We publish minimal information about the deceased and remove or correct entries on request.
-            Please contact us if you spot mistakes or would prefer a record to be hidden.
+            We publish minimal information and will remove or correct entries on request. This project exists to help
+            families pay their respects with ease and dignity.
           </p>
         </div>
       </section>
@@ -324,7 +260,7 @@ export default function Home() {
           <p className="text-center md:text-left">© {new Date().getFullYear()} Saffron Hill Cemetery – Leicester</p>
           <div className="flex items-center gap-5">
             <a className="hover:text-gray-900" href="#privacy">Privacy</a>
-            <a className="hover:text-gray-900" href="#how">How it works</a>
+            <a className="hover:text-gray-900" href="#about">About</a>
             <a className="hover:text-gray-900" href="mailto:hello@example.com">Contact</a>
           </div>
         </div>
