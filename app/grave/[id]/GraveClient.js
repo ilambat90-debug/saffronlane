@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Map, Marker, NavigationControl } from "react-map-gl/maplibre";
@@ -7,13 +8,7 @@ import { Map, Marker, NavigationControl } from "react-map-gl/maplibre";
 const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
 
 export default function GraveClient({ burial }) {
-  // Expected shape (from your server wrapper):
-  // burial = {
-  //   id, full_name, year_of_death, section_code, row, plot, grave_reference, notes,
-  //   lat, lon,
-  //   photos: [{ url, type }]
-  // }
-
+  // burial = { id, full_name, year_of_death, section_code, row, plot, grave_reference, notes, lat, lon, photos: [{url,type}] }
   const [zoom] = useState(18);
 
   const {
@@ -46,9 +41,9 @@ export default function GraveClient({ burial }) {
       </p>
 
       <p className="mt-3">
-        <a href="/" className="text-blue-600 hover:underline">
+        <Link href="/" className="text-blue-600 hover:underline">
           ← Back to search
-        </a>
+        </Link>
       </p>
 
       {/* Map */}
@@ -69,7 +64,7 @@ export default function GraveClient({ burial }) {
             mapStyle={MAP_STYLE}
             mapLib={import("maplibre-gl")}
             initialViewState={{
-              latitude: hasCoords ? lat : 52.615, // Leicester-ish fallback
+              latitude: hasCoords ? lat : 52.615,
               longitude: hasCoords ? lon : -1.123,
               zoom,
             }}
@@ -88,7 +83,6 @@ export default function GraveClient({ burial }) {
           </Map>
         </div>
 
-        {/* Directions */}
         {hasCoords && (
           <div className="p-3 border-t border-gray-200">
             <DirectionsButtons lat={lat} lon={lon} name={full_name} />
@@ -96,7 +90,6 @@ export default function GraveClient({ burial }) {
         )}
       </section>
 
-      {/* Notes */}
       {notes ? (
         <section className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
           <h3 className="font-semibold mb-1">Notes</h3>
@@ -104,7 +97,6 @@ export default function GraveClient({ burial }) {
         </section>
       ) : null}
 
-      {/* Photos */}
       {photos?.length ? (
         <section className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
           <h3 className="font-semibold mb-2">Photos</h3>
@@ -135,20 +127,12 @@ function DirectionsButtons({ lat, lon, name }) {
   const label = encodeURIComponent(name || "Grave");
   const dest = `${lat},${lon}`;
 
-  // Deep links
   const links = useMemo(() => {
-    // Google Maps
     const gWalk = `https://www.google.com/maps/dir/?api=1&origin=Current+Location&destination=${dest}&travelmode=walking`;
     const gDrive = `https://www.google.com/maps/dir/?api=1&origin=Current+Location&destination=${dest}&travelmode=driving`;
-
-    // Apple Maps (on iOS/macOS this opens the native app)
-    // dirflg: w=walk, d=drive
     const aWalk = `https://maps.apple.com/?daddr=${dest}&dirflg=w&q=${label}`;
     const aDrive = `https://maps.apple.com/?daddr=${dest}&dirflg=d&q=${label}`;
-
-    // Waze
     const waze = `https://waze.com/ul?ll=${dest}&navigate=yes`;
-
     return { gWalk, gDrive, aWalk, aDrive, waze };
   }, [dest, label]);
 
