@@ -130,23 +130,10 @@ export default function Home() {
             </h1>
             <p className="mt-3 sm:mt-4 text-base sm:text-lg text-slate-700 leading-relaxed">
               Many of us visit Saffron Hill Cemetery and, with the passing of time, can’t remember the exact place
-              where our loved ones are buried. This project was built by the community to solve that problem:
+              where our loved ones are buried. This project was built for the community to solve that problem:
               search a name, see the location, and get directions straight to the graveside.
             </p>
-            <ul className="mt-5 sm:mt-6 text-slate-700 grid gap-2">
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
-                Works on your phone while you’re at the cemetery
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
-                Clear section, row and plot details; directions available
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
-                Optional headstone/section photos to help you find the spot
-              </li>
-            </ul>
+
 
             <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
               This is a community effort offered sincerely for everyone’s benefit.  
