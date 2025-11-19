@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leicester Saffron Lane Cemetery Locator</title>
+    
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --success: #00d9a3;
+            --text-primary: #ffffff;
+            --text-secondary: #b8b8d1;
+            --text-dark: #1a1a2e;
+            --bg-dark: #0f0f1e;
+            --bg-card: #1e1e3f;
+            --bg-light: #f5f7fa;
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        header {
+            background: var(--gradient-1);
+            color: var(--text-primary);
+            padding: 1rem 1rem;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.25rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .btn-primary {
+            background: var(--gradient-3);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--gradient-2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00d9a3 0%, #00b894 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 217, 163, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+        }
+
+        .search-section,
+        .results-section,
+        .detail-view,
+        .auth-section,
+        .stat-card {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1.25rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .search-section:hover,
+        .results-section:hover,
+        .detail-view:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .search-section h2 {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 0.75rem 1.25rem;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .result-item {
+            padding: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border: 1px solid #e8e8e8;
+        }
+
+        .result-item:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateX(8px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .result-item:hover .result-name,
+        .result-item:hover .result-details {
+            color: white;
+        }
+
+        .result-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            color: #1a1a2e;
+        }
+
+        .result-details {
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        #map {
+            height: 400px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+            border: 4px solid white;
+        }
+
+        .detail-view {
+            display: none;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .detail-header h2 {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .detail-photo {
+            width: 100%;
+            max-width: 400px;
+            height: 280px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin: 1rem 0;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s ease;
+        }
+
+        .detail-photo:hover {
+            transform: scale(1.02);
+        }
+
+        .detail-info {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: #667eea;
+            min-width: 120px;
+        }
+
+        .admin-panel {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e8e8e8;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 0.5rem;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .photo-upload {
+            border: 3px dashed #667eea;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
+        .photo-upload:hover {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .photo-upload p:first-child {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .photo-preview {
+            max-width: 100%;
+            max-height: 350px;
+            margin-top: 1.5rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .auth-section {
+            max-width: 450px;
+            display: none;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 2rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .auth-tab.active {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.25rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-number {
+            font-size: 2.25rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 0.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+        }
+
+        .approval-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border: 2px solid #e8e8e8;
+            transition: all 0.3s ease;
+        }
+
+        .approval-item:hover {
+            border-color: #667eea;
+            transform: translateX(8px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .alert {
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideInDown 0.3s ease;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #00d9a3 0%, #00b894 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 217, 163, 0.3);
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 {
+            margin-top: 1rem;
+        }
+
+        .custom-popup {
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .custom-popup h3 {
+            margin-bottom: 0.75rem;
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+
+        .custom-popup .btn {
+            margin-top: 0.75rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-top: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            .btn {
+                padding: 0.65rem 1.25rem;
+                font-size: 0.9rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-actions {
+                justify-content: stretch;
+            }
+
+            .header-actions .btn {
+                flex: 1;
+            }
+
+            #map {
+                height: 350px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .search-section,
+            .results-section,
+            .detail-view {
+                padding: 1.5rem;
+            }
+
+            .detail-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        ::selection {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🌿 Leicester Saffron Lane Cemetery</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="adminBtn">Admin</button>
+                <button class="btn btn-primary hidden" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="publicView">
+            <div class="search-section">
+                <h2>Find a Loved One</h2>
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        id="searchInput" 
+                        placeholder="Enter name to search..."
+                    >
+                    <button class="btn btn-primary" id="searchBtn">Search</button>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <h3 style="margin-bottom: 1rem;">Search Results</h3>
+                <div id="resultsList"></div>
+            </div>
+
+            <div id="map"></div>
+
+            <div class="detail-view" id="detailView">
+                <div class="detail-header">
+                    <div>
+                        <h2 id="detailName"></h2>
+                        <p id="detailDates" style="color: var(--text-light); margin-top: 0.5rem;"></p>
+                    </div>
+                    <button class="btn btn-secondary" id="closeDetailBtn">Close</button>
+                </div>
+                
+                <img id="detailPhoto" class="detail-photo" style="display: none;">
+                
+                <div class="detail-info" id="detailInfo"></div>
+                
+                <button class="btn btn-primary" id="directionsBtn">
+                    📍 Get Directions to Grave
+                </button>
+            </div>
+        </div>
+
+        <div class="auth-section" id="authSection">
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-tab="login">Login</div>
+                <div class="auth-tab" data-tab="register">Register</div>
+            </div>
+
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="admin@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password">
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" id="loginSubmit">Login</button>
+                <p class="text-center mt-2">
+                    <a href="#" id="backToPublic">Back to search</a>
+                </p>
+            </div>
+
+            <div id="registerForm" class="hidden">
+                <div class="alert alert-info">
+                    Registration requires admin approval before you can add records.
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="registerName" placeholder="John Smith">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="registerPassword" placeholder="Min. 6 characters">
+                </div>
+                <div class="form-group">
+                    <label>Reason for Access</label>
+                    <textarea id="registerReason" placeholder="Please explain why you need admin access..."></textarea>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" id="registerSubmit">Submit Registration</button>
+                <p class="text-center mt-2">
+                    <a href="#" id="backToPublic2">Back to search</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="admin-panel" id="adminPanel">
+            <div style="background: white; padding: 1.25rem; border-radius: 12px; box-shadow: var(--shadow-md); margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.25rem;">Add New Record</h3>
+                
+                <form id="addRecordForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name *</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name *</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" id="dob">
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Death *</label>
+                            <input type="date" id="dod" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Plot/Section Number</label>
+                        <input type="text" id="plotNumber" placeholder="e.g., Section A, Plot 123">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Additional Information</label>
+                        <textarea id="additionalInfo" placeholder="Any additional details, relationships, etc."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Latitude (GPS) *</label>
+                            <input type="number" id="latitude" step="any" placeholder="52.XXXXX" required>
+                            <button type="button" class="btn btn-primary" id="captureLocationBtn" style="margin-top: 0.5rem; width: 100%;">
+                                📍 Capture My Current Location
+                            </button>
+                            <small>Stand at the grave and click the button above</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude (GPS) *</label>
+                            <input type="number" id="longitude" step="any" placeholder="-1.XXXXX" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Grave Photo</label>
+                        <div>
+                            <button type="button" class="photo-upload" id="photoUpload">
+                                📷 Take Photo
+                            </button>
+                            <input type="file" id="photoInput" accept="image/*" capture="environment" style="display: none;">
+                        </div>
+                        <img id="photoPreview" class="photo-preview" style="display: none;">
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary" id="backToPublicBtn">Back to Search</button>
+                        <button type="submit" class="btn btn-success">Add Record</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="approvalsSection" class="hidden" style="background: white; padding: 1.25rem; border-radius: 12px; box-shadow: var(--shadow-md); margin-bottom: 1.25rem; margin-top: 1.5rem;">
+                <h3 style="margin-bottom: 0.75rem; font-size: 1.25rem;">Pending Admin Approvals</h3>
+                <div id="approvalsList"></div>
+            </div>
+
+            <div class="stats-grid" style="margin-top: 1.5rem;">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRecords">0</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalSearches">0</div>
+                    <div class="stat-label">Total Searches</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingApprovals">0</div>
+                    <div class="stat-label">Pending Approvals</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Browser Image Compression -->
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+        import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyATkblKbVvU1y_kUn4HwMxcSRvMd1LeQGQ",
+            authDomain: "saffron-lane-cemetery.firebaseapp.com",
+            projectId: "saffron-lane-cemetery",
+            storageBucket: "saffron-lane-cemetery.firebasestorage.app",
+            messagingSenderId: "749120713446",
+            appId: "1:749120713446:web:af62f8ec3fc8e2e0bf0127"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+        const analytics = getAnalytics(app);
+
+        // Log page view
+        logEvent(analytics, 'page_view');
+
+        // Initialize map
+        const CEMETERY_CENTER = [52.6068, -1.1308];
+        let map = L.map('map').setView(CEMETERY_CENTER, 16);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        let markers = [];
+        let currentUser = null;
+
+        // Utility functions
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => alertDiv.remove(), 4000);
+        }
+
+        function showLoading() {
+            const loading = document.createElement('div');
+            loading.className = 'loading';
+            loading.id = 'loadingIndicator';
+            loading.innerHTML = 'Loading...';
+            document.querySelector('.container').appendChild(loading);
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loadingIndicator');
+            if (loading) loading.remove();
+        }
+
+        // Load records from Firestore
+        async function loadRecordsOnMap() {
+            try {
+                markers.forEach(marker => map.removeLayer(marker));
+                markers = [];
+                
+                const gravesSnapshot = await getDocs(collection(db, 'graves'));
+                
+                gravesSnapshot.forEach((doc) => {
+                    const record = doc.data();
+                    record.id = doc.id;
+                    
+                    const marker = L.marker([record.latitude, record.longitude]).addTo(map);
+                    
+                    const popupContent = `
+                        <div class="custom-popup">
+                            <h3>${record.firstName} ${record.lastName}</h3>
+                            <p>${record.dob ? new Date(record.dob).getFullYear() : '?'} - ${new Date(record.dod).getFullYear()}</p>
+                            <button class="btn btn-primary" onclick="showDetail('${record.id}')">View Details</button>
+                        </div>
+                    `;
+                    
+                    marker.bindPopup(popupContent);
+                    markers.push(marker);
+                });
+
+                updateStats();
+            } catch (error) {
+                console.error('Error loading records:', error);
+                showAlert('Error loading records', 'error');
+            }
+        }
+
+        // Search functionality
+        async function searchRecords(query) {
+            try {
+                logEvent(analytics, 'search', { search_term: query });
+                
+                // Increment search counter
+                try {
+                    const statsRef = doc(db, 'analytics', 'stats');
+                    const statsDoc = await getDocs(query(collection(db, 'analytics'), where('__name__', '==', 'stats')));
+                    
+                    if (!statsDoc.empty) {
+                        await updateDoc(statsRef, {
+                            totalSearches: (statsDoc.docs[0].data().totalSearches || 0) + 1
+                        });
+                    } else {
+                        await addDoc(collection(db, 'analytics'), {
+                            id: 'stats',
+                            totalSearches: 1
+                        });
+                    }
+                } catch (e) {
+                    console.log('Analytics update failed:', e);
+                }
+
+                const gravesSnapshot = await getDocs(collection(db, 'graves'));
+                const lowerQuery = query.toLowerCase();
+                
+                return gravesSnapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(record => {
+                        const fullName = `${record.firstName} ${record.lastName}`.toLowerCase();
+                        return fullName.includes(lowerQuery);
+                    });
+            } catch (error) {
+                console.error('Search error:', error);
+                return [];
+            }
+        }
+
+        function displaySearchResults(results) {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsList = document.getElementById('resultsList');
+            
+            if (results.length === 0) {
+                resultsList.innerHTML = '<p class="text-center" style="color: var(--text-light);">No results found. Try a different name.</p>';
+            } else {
+                resultsList.innerHTML = results.map(record => `
+                    <div class="result-item" onclick="showDetail('${record.id}')">
+                        <div class="result-name">${record.firstName} ${record.lastName}</div>
+                        <div class="result-details">
+                            ${record.dob ? new Date(record.dob).toLocaleDateString() : 'Unknown'} - ${new Date(record.dod).toLocaleDateString()}
+                            ${record.plotNumber ? ' • ' + record.plotNumber : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            resultsSection.style.display = 'block';
+        }
+
+        // Show detail view
+        window.showDetail = async function(recordId) {
+            try {
+                const gravesSnapshot = await getDocs(collection(db, 'graves'));
+                const record = gravesSnapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .find(r => r.id === recordId);
+                
+                if (!record) return;
+                
+                logEvent(analytics, 'view_item', { item_id: recordId });
+                
+                document.getElementById('detailName').textContent = `${record.firstName} ${record.lastName}`;
+                document.getElementById('detailDates').textContent = 
+                    `${record.dob ? new Date(record.dob).toLocaleDateString() : 'Unknown'} - ${new Date(record.dod).toLocaleDateString()}`;
+                
+                const photoEl = document.getElementById('detailPhoto');
+                if (record.photoURL) {
+                    photoEl.src = record.photoURL;
+                    photoEl.style.display = 'block';
+                } else {
+                    photoEl.style.display = 'none';
+                }
+                
+                const infoHtml = `
+                    ${record.plotNumber ? `<div class="info-row"><span class="info-label">Location:</span><span>${record.plotNumber}</span></div>` : ''}
+                    <div class="info-row">
+                        <span class="info-label">GPS:</span>
+                        <span>${record.latitude}, ${record.longitude}</span>
+                    </div>
+                    ${record.additionalInfo ? `<div class="info-row"><span class="info-label">Notes:</span><span>${record.additionalInfo}</span></div>` : ''}
+                `;
+                
+                document.getElementById('detailInfo').innerHTML = infoHtml;
+                document.getElementById('detailView').style.display = 'block';
+                map.setView([record.latitude, record.longitude], 18);
+                
+                window.currentRecord = record;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error showing detail:', error);
+                showAlert('Error loading details', 'error');
+            }
+        };
+
+        // Update stats
+        async function updateStats() {
+            try {
+                const gravesSnapshot = await getDocs(collection(db, 'graves'));
+                document.getElementById('totalRecords').textContent = gravesSnapshot.size;
+                
+                // Get analytics stats
+                const statsSnapshot = await getDocs(query(collection(db, 'analytics'), where('__name__', '==', 'stats')));
+                if (!statsSnapshot.empty) {
+                    const stats = statsSnapshot.docs[0].data();
+                    document.getElementById('totalSearches').textContent = stats.totalSearches || 0;
+                }
+
+                // Get pending approvals (if super admin)
+                if (currentUser && currentUser.role === 'super_admin') {
+                    const usersSnapshot = await getDocs(query(collection(db, 'users'), where('approved', '==', false)));
+                    document.getElementById('pendingApprovals').textContent = usersSnapshot.size;
+                    
+                    if (usersSnapshot.size > 0) {
+                        showPendingApprovals();
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        // Show pending approvals
+        async function showPendingApprovals() {
+            if (!currentUser || currentUser.role !== 'super_admin') return;
+            
+            try {
+                const usersSnapshot = await getDocs(query(collection(db, 'users'), where('approved', '==', false)));
+                const approvalsSection = document.getElementById('approvalsSection');
+                const approvalsList = document.getElementById('approvalsList');
+                
+                if (usersSnapshot.empty) {
+                    approvalsSection.style.display = 'none';
+                    return;
+                }
+                
+                approvalsSection.style.display = 'block';
+                
+                approvalsList.innerHTML = usersSnapshot.docs.map(doc => {
+                    const user = doc.data();
+                    return `
+                        <div class="approval-item">
+                            <div>
+                                <strong>${user.name}</strong>
+                                <div style="color: var(--text-light); font-size: 0.9rem;">${user.email}</div>
+                                <div style="margin-top: 0.5rem; font-size: 0.9rem;">${user.reason}</div>
+                            </div>
+                            <div class="approval-actions">
+                                <button class="btn btn-success" onclick="approveUser('${doc.id}')">Approve</button>
+                                <button class="btn btn-danger" onclick="rejectUser('${doc.id}')">Reject</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error showing approvals:', error);
+            }
+        }
+
+        window.approveUser = async function(userId) {
+            try {
+                await updateDoc(doc(db, 'users', userId), { approved: true });
+                showAlert('User approved successfully!', 'success');
+                showPendingApprovals();
+                updateStats();
+            } catch (error) {
+                console.error('Error approving user:', error);
+                showAlert('Error approving user', 'error');
+            }
+        };
+
+        window.rejectUser = async function(userId) {
+            try {
+                await deleteDoc(doc(db, 'users', userId));
+                showAlert('User registration rejected.', 'info');
+                showPendingApprovals();
+                updateStats();
+            } catch (error) {
+                console.error('Error rejecting user:', error);
+                showAlert('Error rejecting user', 'error');
+            }
+        };
+
+        // Authentication
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
+                    if (!userDoc.empty) {
+                        currentUser = { uid: user.uid, ...userDoc.docs[0].data() };
+                        
+                        if (currentUser.approved) {
+                            document.getElementById('adminBtn').style.display = 'none';
+                            document.getElementById('logoutBtn').classList.remove('hidden');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading user:', error);
+                }
+            } else {
+                currentUser = null;
+            }
+        });
+
+        // Event listeners
+        document.getElementById('searchBtn').addEventListener('click', async function() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query.length < 2) {
+                showAlert('Please enter at least 2 characters to search', 'error');
+                return;
+            }
+            
+            showLoading();
+            const results = await searchRecords(query);
+            hideLoading();
+            displaySearchResults(results);
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
+
+        document.getElementById('closeDetailBtn').addEventListener('click', function() {
+            document.getElementById('detailView').style.display = 'none';
+        });
+
+        document.getElementById('directionsBtn').addEventListener('click', function() {
+            if (!window.currentRecord) return;
+            
+            const lat = window.currentRecord.latitude;
+            const lng = window.currentRecord.longitude;
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    const url = `https://www.google.com/maps/dir/${userLat},${userLng}/${lat},${lng}`;
+                    window.open(url, '_blank');
+                }, function() {
+                    const url = `https://www.google.com/maps?q=${lat},${lng}`;
+                    window.open(url, '_blank');
+                });
+            } else {
+                const url = `https://www.google.com/maps?q=${lat},${lng}`;
+                window.open(url, '_blank');
+            }
+        });
+
+        document.getElementById('adminBtn').addEventListener('click', function() {
+            if (currentUser && currentUser.approved) {
+                showAdminPanel();
+            } else {
+                document.getElementById('publicView').style.display = 'none';
+                document.getElementById('authSection').style.display = 'block';
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            try {
+                await signOut(auth);
+                location.reload();
+            } catch (error) {
+                showAlert('Error signing out', 'error');
+            }
+        });
+
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                if (tabName === 'login') {
+                    document.getElementById('loginForm').classList.remove('hidden');
+                    document.getElementById('registerForm').classList.add('hidden');
+                } else {
+                    document.getElementById('loginForm').classList.add('hidden');
+                    document.getElementById('registerForm').classList.remove('hidden');
+                }
+            });
+        });
+
+        document.getElementById('loginSubmit').addEventListener('click', async function() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                showLoading();
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
+                if (!userDoc.empty) {
+                    const userData = userDoc.docs[0].data();
+                    if (!userData.approved) {
+                        showAlert('Your registration is pending approval.', 'info');
+                        await signOut(auth);
+                        hideLoading();
+                        return;
+                    }
+                    
+                    currentUser = { uid: user.uid, ...userData };
+                    hideLoading();
+                    showAdminPanel();
+                } else {
+                    showAlert('User not found', 'error');
+                    await signOut(auth);
+                    hideLoading();
+                }
+            } catch (error) {
+                hideLoading();
+                showAlert('Invalid email or password', 'error');
+            }
+        });
+
+        document.getElementById('registerSubmit').addEventListener('click', async function() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const reason = document.getElementById('registerReason').value;
+            
+            if (!name || !email || !password || !reason) {
+                showAlert('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            try {
+                showLoading();
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                
+                await addDoc(collection(db, 'users'), {
+                    uid: userCredential.user.uid,
+                    name: name,
+                    email: email,
+                    reason: reason,
+                    approved: false,
+                    role: 'admin',
+                    createdAt: serverTimestamp()
+                });
+                
+                hideLoading();
+                showAlert('Registration submitted! Please wait for admin approval.', 'success');
+                
+                document.getElementById('registerName').value = '';
+                document.getElementById('registerEmail').value = '';
+                document.getElementById('registerPassword').value = '';
+                document.getElementById('registerReason').value = '';
+                
+                document.querySelector('.auth-tab[data-tab="login"]').click();
+                
+                await signOut(auth);
+            } catch (error) {
+                hideLoading();
+                if (error.code === 'auth/email-already-in-use') {
+                    showAlert('Email already registered', 'error');
+                } else {
+                    showAlert('Registration failed: ' + error.message, 'error');
+                }
+            }
+        });
+
+        document.getElementById('backToPublic').addEventListener('click', function(e) {
+            e.preventDefault();
+            showPublicView();
+        });
+
+        document.getElementById('backToPublic2').addEventListener('click', function(e) {
+            e.preventDefault();
+            showPublicView();
+        });
+
+        document.getElementById('backToPublicBtn').addEventListener('click', function() {
+            showPublicView();
+        });
+
+        // Capture location button
+        document.getElementById('captureLocationBtn').addEventListener('click', function() {
+            const btn = this;
+            btn.textContent = '📍 Getting location...';
+            btn.disabled = true;
+            
+            if (!navigator.geolocation) {
+                showAlert('GPS not supported on this device', 'error');
+                btn.textContent = '📍 Capture My Current Location';
+                btn.disabled = false;
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    
+                    document.getElementById('latitude').value = lat.toFixed(6);
+                    document.getElementById('longitude').value = lng.toFixed(6);
+                    
+                    map.setView([lat, lng], 18);
+                    
+                    showAlert(`Location captured! Accuracy: ${accuracy.toFixed(0)} meters`, 'success');
+                    btn.textContent = '✅ Location Captured';
+                    
+                    setTimeout(() => {
+                        btn.textContent = '📍 Capture My Current Location';
+                        btn.disabled = false;
+                    }, 3000);
+                },
+                function(error) {
+                    let errorMsg = 'Unable to get location. ';
+                    if (error.code === 1) {
+                        errorMsg += 'Please enable location permissions.';
+                    } else if (error.code === 2) {
+                        errorMsg += 'Location unavailable.';
+                    } else if (error.code === 3) {
+                        errorMsg += 'Request timed out.';
+                    }
+                    
+                    showAlert(errorMsg, 'error');
+                    btn.textContent = '📍 Capture My Current Location';
+                    btn.disabled = false;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        });
+
+        document.getElementById('photoUpload').addEventListener('click', function() {
+            document.getElementById('photoInput').click();
+        });
+
+        document.getElementById('photoInput').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showAlert('Please select an image file', 'error');
+                return;
+            }
+            
+            try {
+                // Show compression message
+                showAlert('Compressing image...', 'info');
+                
+                // Compression options - aggressive compression for speed
+                const options = {
+                    maxSizeMB: 0.5,              // Max 500KB
+                    maxWidthOrHeight: 1920,      // Max dimension
+                    useWebWorker: true,          // Use background thread
+                    fileType: 'image/jpeg'       // Convert to JPEG
+                };
+                
+                // Compress the image (takes ~1 second)
+                const compressedFile = await imageCompression(file, options);
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('photoPreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    showAlert('Photo ready! (' + (compressedFile.size / 1024).toFixed(0) + 'KB)', 'success');
+                };
+                reader.readAsDataURL(compressedFile);
+                
+                // Store compressed file for upload
+                window.compressedPhoto = compressedFile;
+                
+            } catch (error) {
+                console.error('Compression error:', error);
+                showAlert('Error processing photo. Try again.', 'error');
+            }
+        });
+
+        document.getElementById('addRecordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!currentUser || !currentUser.approved) {
+                showAlert('You must be an approved admin to add records', 'error');
+                return;
+            }
+            
+            // Validate required fields
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const dod = document.getElementById('dod').value;
+            const lat = document.getElementById('latitude').value;
+            const lng = document.getElementById('longitude').value;
+            
+            if (!firstName || !lastName || !dod || !lat || !lng) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // Disable submit button
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Adding...';
+            
+            try {
+                showAlert('Adding record...', 'info');
+                
+                const record = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    dob: document.getElementById('dob').value || null,
+                    dod: dod,
+                    plotNumber: document.getElementById('plotNumber').value.trim() || null,
+                    additionalInfo: document.getElementById('additionalInfo').value.trim() || null,
+                    latitude: parseFloat(lat),
+                    longitude: parseFloat(lng),
+                    createdBy: currentUser.uid,
+                    createdAt: serverTimestamp()
+                };
+                
+                // Upload photo if exists
+                const photoFile = window.compressedPhoto || document.getElementById('photoInput').files[0];
+                if (photoFile) {
+                    submitBtn.textContent = 'Uploading photo...';
+                    
+                    try {
+                        const timestamp = Date.now();
+                        const photoRef = ref(storage, `graves/${timestamp}_${photoFile.name}`);
+                        
+                        // Upload with timeout
+                        const uploadPromise = uploadBytes(photoRef, photoFile);
+                        const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('Upload timeout')), 30000)
+                        );
+                        
+                        await Promise.race([uploadPromise, timeoutPromise]);
+                        record.photoURL = await getDownloadURL(photoRef);
+                        
+                    } catch (uploadError) {
+                        console.error('Photo upload failed:', uploadError);
+                        showAlert('Photo upload failed, saving without photo...', 'error');
+                        // Continue without photo
+                    }
+                }
+                
+                submitBtn.textContent = 'Saving record...';
+                
+                // Add to Firestore
+                await addDoc(collection(db, 'graves'), record);
+                
+                showAlert('✅ Record added successfully!', 'success');
+                
+                // Reset form
+                this.reset();
+                document.getElementById('photoPreview').style.display = 'none';
+                window.compressedPhoto = null;
+                
+                // Reload map
+                await loadRecordsOnMap();
+                updateStats();
+                
+                logEvent(analytics, 'add_record');
+                
+            } catch (error) {
+                console.error('Error adding record:', error);
+                showAlert('❌ Error: ' + error.message, 'error');
+            } finally {
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+
+        // View management
+        function showPublicView() {
+            document.getElementById('publicView').style.display = 'block';
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminBtn').style.display = 'inline-block';
+            document.getElementById('logoutBtn').classList.add('hidden');
+        }
+
+        function showAdminPanel() {
+            document.getElementById('publicView').style.display = 'none';
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('adminBtn').style.display = 'none';
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            
+            updateStats();
+            showPendingApprovals();
+        }
+
+        // Map click handler for admins
+        map.on('click', function(e) {
+            if (currentUser && currentUser.approved) {
+                document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+                document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
+                showAlert('Coordinates captured from map!', 'success');
+            }
+        });
+
+        // Initialize
+        async function init() {
+            showLoading();
+            await loadRecordsOnMap();
+            hideLoading();
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
