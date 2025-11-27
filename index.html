@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leicester Saffron Lane Cemetery Locator</title>
+    
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a2e;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --text-dark: #1a1a2e;
+            --bg-light: #f5f7fa;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        header {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-top {
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .burger-menu {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .burger-menu:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .burger-line {
+            width: 25px;
+            height: 3px;
+            background: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .burger-menu.active .burger-line:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .burger-menu.active .burger-line:nth-child(2) {
+            opacity: 0;
+        }
+
+        .burger-menu.active .burger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        nav {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @media (min-width: 769px) {
+            nav {
+                display: block !important;
+            }
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            gap: 0.25rem;
+            justify-content: flex-end;
+        }
+
+        .nav-item {
+            padding: 0.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 2px solid transparent;
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 0;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom-color: white;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+        }
+
+        .page-section {
+            display: none;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        /* Home Page */
+        .hero {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #666;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-dark);
+        }
+
+        .feature-card p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* About Page */
+        .about-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+        }
+
+        .about-content h2 {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+
+        .about-content h3 {
+            color: var(--text-dark);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .about-content p {
+            margin-bottom: 1.25rem;
+            line-height: 1.8;
+            color: #444;
+            font-size: 1.05rem;
+        }
+
+        .about-content ol {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .about-content li {
+            margin-bottom: 0.75rem;
+            line-height: 1.8;
+            color: #444;
+        }
+
+        .prayer-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            margin-top: 2rem;
+        }
+
+        .prayer-box p {
+            margin-bottom: 0.5rem;
+            font-style: italic;
+            color: #555;
+        }
+
+        /* Search Page */
+        .search-section {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1.25rem;
+        }
+
+        .search-section h2 {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 0.75rem 1.25rem;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            padding: 0.6rem 1.25rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-3);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        #map {
+            height: 400px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+            border: 4px solid white;
+        }
+
+        .results-section {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1.25rem;
+            display: none;
+        }
+
+        .result-item {
+            padding: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border: 1px solid #e8e8e8;
+        }
+
+        .result-item:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateX(8px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .result-item:hover .result-name,
+        .result-item:hover .result-details {
+            color: white;
+        }
+
+        .result-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            color: #1a1a2e;
+        }
+
+        .result-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .detail-view {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1.25rem;
+            display: none;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .detail-header h2 {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+
+        .detail-photo {
+            width: 100%;
+            max-width: 400px;
+            height: 280px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin: 1rem 0;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s ease;
+        }
+
+        .detail-photo:hover {
+            transform: scale(1.02);
+        }
+
+        .detail-info {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: #667eea;
+            min-width: 120px;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            animation: slideInDown 0.3s ease;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #00d9a3 0%, #00b894 100%);
+            color: white;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-top: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            background: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            margin-top: 3rem;
+            border-top: 1px solid #e8e8e8;
+        }
+
+        footer p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 0.5rem;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .hero h2 {
+                font-size: 1.75rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .burger-menu {
+                display: flex;
+            }
+
+            nav {
+                display: none;
+            }
+
+            nav.active {
+                display: block;
+            }
+
+            .nav-container {
+                flex-direction: column;
+            }
+
+            .nav-item {
+                padding: 0.85rem 1.5rem;
+                font-size: 0.95rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            h1 {
+                font-size: 1rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #map {
+                height: 350px;
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        ::selection {
+            background: #667eea;
+            color: white;
+        }
+
+        .custom-popup {
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .custom-popup h3 {
+            margin-bottom: 0.75rem;
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+
+        .custom-popup .btn {
+            margin-top: 0.75rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <h1>🌿 Leicester Saffron Lane Cemetery</h1>
+            <div class="burger-menu" id="burgerMenu">
+                <div class="burger-line"></div>
+                <div class="burger-line"></div>
+                <div class="burger-line"></div>
+            </div>
+        </div>
+        <nav id="mainNav">
+            <div class="nav-container">
+                <div class="nav-item active" data-page="home">Home</div>
+                <div class="nav-item" data-page="about">About</div>
+                <div class="nav-item" data-page="search">Search</div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- HOME PAGE -->
+        <div class="page-section active" id="home">
+            <div class="hero">
+                <h2>Find Your Loved Ones</h2>
+                <p>Easily locate and navigate to graves at Leicester Saffron Lane Cemetery</p>
+                <button class="btn btn-primary btn-large" onclick="showPage('search')">
+                    🔍 Start Searching
+                </button>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Quick Search</h3>
+                    <p>Find graves by name in seconds with our intuitive search system</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>Interactive Map</h3>
+                    <p>See exact locations on our detailed interactive cemetery map</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📍</div>
+                    <h3>GPS Navigation</h3>
+                    <p>Get turn-by-turn directions directly to any grave location</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💝</div>
+                    <h3>Free Service</h3>
+                    <p>Provided freely to our community as a labor of love</p>
+                </div>
+            </div>
+
+            <div style="text-align: center; background: white; padding: 2rem; border-radius: 16px; box-shadow: var(--shadow-md);">
+                <h3 style="margin-bottom: 1rem; color: var(--text-dark);">Why This Matters</h3>
+                <p style="color: #666; margin-bottom: 1.5rem; max-width: 700px; margin-left: auto; margin-right: auto;">
+                    We understand how important it is to honor and remember those who have passed. 
+                    This tool helps families spend more time in meaningful remembrance, rather than searching.
+                </p>
+                <button class="btn btn-secondary" onclick="showPage('about')">
+                    Learn Our Story
+                </button>
+            </div>
+        </div>
+
+        <!-- ABOUT PAGE -->
+        <div class="page-section" id="about">
+            <div class="about-content">
+                <h2>Why We Built This</h2>
+                
+                <p>
+                    Like many of you, I regularly visit Saffron Lane Cemetery to pay respects to family and friends 
+                    who have passed. Over the years, I found myself struggling to remember exactly where each person 
+                    was laid to rest. Walking through the cemetery, searching for familiar names, can be both emotional 
+                    and time-consuming.
+                </p>
+
+                <p>
+                    I realized this must be a common challenge for many families in our community. That's why we 
+                    created this free tool – to help everyone easily locate their loved ones' final resting places 
+                    and spend more time in meaningful remembrance rather than searching.
+                </p>
+
+                <h3>How It Works</h3>
+                
+                <ol>
+                    <li><strong>Search</strong> – Enter the name of your loved one in our search system</li>
+                    <li><strong>Locate</strong> – View their exact location on our interactive cemetery map</li>
+                    <li><strong>Navigate</strong> – Get GPS directions that lead you directly to their grave</li>
+                    <li><strong>Remember</strong> – Spend your time in peaceful, meaningful remembrance</li>
+                </ol>
+
+                <h3>Our Commitment</h3>
+                
+                <p>
+                    This service is provided completely free to our community. We're continuously adding new records 
+                    and improving the system to better serve families. Our database includes GPS coordinates, photos, 
+                    and additional information to help you honor your loved ones.
+                </p>
+
+                <div class="prayer-box">
+                    <h3 style="margin-top: 0; color: #667eea;">A Simple Request</h3>
+                    <p>
+                        This project is a labor of love, provided freely to help our community. If this tool helps 
+                        you find a loved one and brings you peace, I kindly ask that you remember me and this project 
+                        in your prayers. Your prayers mean more to me than any payment could.
+                    </p>
+                </div>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="btn btn-primary btn-large" onclick="showPage('search')">
+                        Begin Your Search
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEARCH PAGE -->
+        <div class="page-section" id="search">
+            <div class="search-section">
+                <h2>Find a Loved One</h2>
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        id="searchInput" 
+                        placeholder="Enter name to search..."
+                    >
+                    <button class="btn btn-primary" id="searchBtn">Search</button>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <h3 style="margin-bottom: 1rem;">Search Results</h3>
+                <div id="resultsList"></div>
+            </div>
+
+            <div id="map"></div>
+
+            <div class="detail-view" id="detailView">
+                <img id="detailPhoto" class="detail-photo" style="display: none; margin: 0 auto 1.5rem;">
+                
+                <div class="detail-header">
+                    <div>
+                        <h2 id="detailName"></h2>
+                        <p id="detailDates" style="color: #666; margin-top: 0.5rem;"></p>
+                    </div>
+                    <button class="btn btn-secondary" id="closeDetailBtn">Close</button>
+                </div>
+                
+                <div class="detail-info" id="detailInfo"></div>
+                
+                <button class="btn btn-primary" id="directionsBtn">
+                    📍 Get Directions to Grave
+                </button>
+            </div>
+
+            <div style="background: white; padding: 1.5rem; border-radius: 16px; box-shadow: var(--shadow-md); text-align: center;">
+                <p style="color: #666; margin-bottom: 1rem;">
+                    Can't find who you're looking for? The record might not be in our database yet.
+                </p>
+                <p style="color: #666; font-size: 0.9rem;">
+                    We're continuously adding new records. Please check back soon.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Leicester Saffron Lane Cemetery Locator. A community service project.</p>
+            <p style="margin-top: 0.5rem;">
+                <a href="admin.html">Admin Login</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyATkblKbVvU1y_kUn4HwMxcSRvMd1LeQGQ",
+            authDomain: "saffron-lane-cemetery.firebaseapp.com",
+            projectId: "saffron-lane-cemetery",
+            storageBucket: "saffron-lane-cemetery.firebasestorage.app",
+            messagingSenderId: "749120713446",
+            appId: "1:749120713446:web:af62f8ec3fc8e2e0bf0127"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
+
+        // Log page view
+        logEvent(analytics, 'page_view');
+
+        // Initialize map
+        const CEMETERY_CENTER = [52.6068, -1.1308];
+        let map = L.map('map').setView(CEMETERY_CENTER, 16);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        let markers = [];
+
+        // Utility functions
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => alertDiv.remove(), 4000);
+        }
+
+        function showLoading() {
+            const loading = document.createElement('div');
+            loading.className = 'loading';
+            loading.id = 'loadingIndicator';
+            loading.innerHTML = 'Loading...';
+            document.querySelector('#search').appendChild(loading);
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loadingIndicator');
+            if (loading) loading.remove();
+        }
+
+        // Load records on map
+        async function loadRecordsOnMap() {
+            try {
+                markers.forEach(marker => map.removeLayer(marker));
+                markers = [];
+                
+                const gravesSnapshot = await getDocs(collection(db, 'graves'));
+                
+                gravesSnapshot.forEach((doc) => {
+                    const record = doc.data();
+                    record.id = doc.id;
+                    
+                    if (record.latitude && record.longitude) {
+                        const marker = L.marker([record.latitude, record.longitude]).addTo(map);
+                        
+                        const popupContent = `
+                            <div class="custom-popup">
+                                <h3>${record.firstName} ${record.lastName}</h3>
+                                <p>${record.dob ? new Date(record.dob).getFullYear() : '?'} - ${new Date(record.dod).getFullYear()}</p>
+                                <button class="btn btn-primary" onclick="showDetail('${record.id}')">View Details</button>
+                            </div>
+                        `;
+                        
+                        marker.bindPopup(popupContent);
+                        markers.push(marker);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading records:', error);
+                showAlert('Error loading records', 'error');
+            }
+        }
+
+        // Search functionality
+        async function searchRecords(searchQuery) {
+            try {
+                logEvent(analytics, 'search', { search_term: searchQuery });
+
+                const gravesSnapshot = await getDocs(collection(db, 'graves'));
+                const lowerQuery = searchQuery.toLowerCase();
+                
+                return gravesSnapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(record => {
+                        const fullName = `${record.firstName} ${record.lastName}`.toLowerCase();
+                        return fullName.includes(lowerQuery);
+                    });
+            } catch (error) {
+                console.error('Search error:', error);
+                return [];
+            }
+        }
+
+        function displaySearchResults(results) {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsList = document.getElementById('resultsList');
+            
+            if (results.length === 0) {
+                resultsList.innerHTML = '<p class="text-center" style="color: #666;">No results found. Try a different name.</p>';
+            } else {
+                resultsList.innerHTML = results.map(record => `
+                    <div class="result-item" onclick="showDetail('${record.id}')">
+                        <div class="result-name">${record.firstName} ${record.lastName}</div>
+                        <div class="result-details">
+                            Born: ${record.dob ? new Date(record.dob).toLocaleDateString('en-GB') : 'Unknown'} • Died: ${new Date(record.dod).toLocaleDateString('en-GB')}
+                            ${record.plotNumber ? ' • Location: ' + record.plotNumber : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            resultsSection.style.display = 'block';
+        }
+
+        // Show detail view
+        window.showDetail = async function(recordId) {
+            try {
+                const gravesSnapshot = await getDocs(collection(db, 'graves'));
+                const record = gravesSnapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .find(r => r.id === recordId);
+                
+                if (!record) return;
+                
+                logEvent(analytics, 'view_item', { item_id: recordId });
+                
+                // Show photo first if available
+                const photoEl = document.getElementById('detailPhoto');
+                if (record.photoURL) {
+                    photoEl.src = record.photoURL;
+                    photoEl.style.display = 'block';
+                } else {
+                    photoEl.style.display = 'none';
+                }
+                
+                document.getElementById('detailName').textContent = `${record.firstName} ${record.lastName}`;
+                document.getElementById('detailDates').textContent = 
+                    `Born: ${record.dob ? new Date(record.dob).toLocaleDateString('en-GB') : 'Unknown'} • Died: ${new Date(record.dod).toLocaleDateString('en-GB')}`;
+                
+                const infoHtml = `
+                    ${record.plotNumber ? `<div class="info-row"><span class="info-label">Location:</span><span>${record.plotNumber}</span></div>` : ''}
+                    ${record.additionalInfo ? `<div class="info-row"><span class="info-label">Notes:</span><span>${record.additionalInfo}</span></div>` : ''}
+                `;
+                
+                document.getElementById('detailInfo').innerHTML = infoHtml;
+                document.getElementById('detailView').style.display = 'block';
+                map.setView([record.latitude, record.longitude], 18);
+                
+                window.currentRecord = record;
+                
+                // Scroll to detail view smoothly
+                setTimeout(() => {
+                    document.getElementById('detailView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            } catch (error) {
+                console.error('Error showing detail:', error);
+                showAlert('Error loading details', 'error');
+            }
+        };
+
+        // Navigation
+        const navItems = document.querySelectorAll('.nav-item');
+        const sections = document.querySelectorAll('.page-section');
+        const burgerMenu = document.getElementById('burgerMenu');
+        const mainNav = document.getElementById('mainNav');
+
+        // Burger menu toggle
+        burgerMenu.addEventListener('click', function() {
+            this.classList.toggle('active');
+            mainNav.classList.toggle('active');
+        });
+
+        function showPage(pageName) {
+            navItems.forEach(item => {
+                if (item.dataset.page === pageName) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
+            sections.forEach(section => {
+                if (section.id === pageName) {
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+
+            if (pageName === 'search') {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
+
+            // Close mobile menu after selection
+            burgerMenu.classList.remove('active');
+            mainNav.classList.remove('active');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                showPage(this.dataset.page);
+            });
+        });
+
+        window.showPage = showPage;
+
+        // Event listeners
+        document.getElementById('searchBtn').addEventListener('click', async function() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query.length < 2) {
+                showAlert('Please enter at least 2 characters to search', 'error');
+                return;
+            }
+            
+            showLoading();
+            const results = await searchRecords(query);
+            hideLoading();
+            displaySearchResults(results);
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
+
+        document.getElementById('closeDetailBtn').addEventListener('click', function() {
+            document.getElementById('detailView').style.display = 'none';
+        });
+
+        document.getElementById('directionsBtn').addEventListener('click', function() {
+            if (!window.currentRecord) return;
+            
+            const lat = window.currentRecord.latitude;
+            const lng = window.currentRecord.longitude;
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    const url = `https://www.google.com/maps/dir/${userLat},${userLng}/${lat},${lng}`;
+                    window.open(url, '_blank');
+                }, function() {
+                    const url = `https://www.google.com/maps?q=${lat},${lng}`;
+                    window.open(url, '_blank');
+                });
+            } else {
+                const url = `https://www.google.com/maps?q=${lat},${lng}`;
+                window.open(url, '_blank');
+            }
+        });
+
+        // Initialize
+        async function init() {
+            showLoading();
+            await loadRecordsOnMap();
+            hideLoading();
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
